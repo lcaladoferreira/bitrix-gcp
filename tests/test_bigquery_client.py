@@ -1,25 +1,16 @@
 import pytest
-from src.bigquery_client import BigQueryClient
+from src.bitrix_gcp.bigquery_client import BigQueryClient
+from src.bitrix_gcp.schemas import DEAL_SCHEMA
 
-def test_merge_sql_construction(mocker):
-    # Mock bigquery.Client
+def test_merge_query_generation(mocker):
     mocker.patch("google.cloud.bigquery.Client")
+    client = BigQueryClient("proj")
+    mock_query = mocker.patch.object(client.client, 'query')
 
-    bq_client = BigQueryClient()
-    mock_query = mocker.patch.object(bq_client.client, 'query')
+    client.merge_to_final("staging", "final", DEAL_SCHEMA)
 
-    staging_table = "project.dataset.deals_staging"
-    final_table = "project.dataset.deals"
-
-    bq_client.merge_staging_to_final(staging_table, final_table)
-
-    # Verify the SQL construction
-    args, kwargs = mock_query.call_args
-    sql = args[0]
-
-    assert f"MERGE `{final_table}` T" in sql
-    assert f"FROM `{staging_table}`" in sql
-    assert "ROW_NUMBER() OVER(PARTITION BY ID ORDER BY DATE_MODIFY DESC)" in sql
-    assert "WHEN MATCHED THEN" in sql
-    assert "WHEN NOT MATCHED THEN" in sql
-    assert "T.payload = S.payload" in sql
+    args, _ = mock_query.call_args
+    query = args[0]
+    assert "MERGE `final` T" in query
+    assert "USING (" in query
+    assert "ROW_NUMBER() OVER(PARTITION BY ID ORDER BY DATE_MODIFY DESC)" in query

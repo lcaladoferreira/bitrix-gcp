@@ -1,30 +1,20 @@
 import json
 import pytest
-from src.storage_client import StorageClient
+from src.bitrix_gcp.storage_client import StorageClient
 
-def test_jsonl_generation(mocker):
-    # Mock storage.Client
+def test_upload_jsonl_format(mocker):
     mocker.patch("google.cloud.storage.Client")
-
-    client = StorageClient("test-bucket")
-
-    # Mock bucket and blob
-    mock_bucket = mocker.Mock()
+    client = StorageClient("bucket")
     mock_blob = mocker.Mock()
-    client.bucket = mock_bucket
-    mock_bucket.blob.return_value = mock_blob
+    client.bucket.blob.return_value = mock_blob
 
-    records = [{"ID": "1", "TITLE": "Deal 1"}]
-    client.upload_jsonl_chunk(records, "deals")
+    records = [{"ID": "1"}]
+    client.upload_jsonl(records, "deals", "batch1", 1)
 
-    # Check what was uploaded
-    args, kwargs = mock_blob.upload_from_string.call_args
-    uploaded_content = args[0]
-
-    # Content should be JSONL and contain the payload field
-    lines = uploaded_content.split("\n")
-    assert len(lines) == 1
-    data = json.loads(lines[0])
-    assert data["ID"] == "1"
-    assert data["payload"]["ID"] == "1"
-    assert data["payload"]["TITLE"] == "Deal 1"
+    # Check upload content
+    args, _ = mock_blob.upload_from_string.call_args
+    uploaded_bytes = args[0]
+    line = json.loads(uploaded_bytes.decode("utf-8"))
+    assert line["ID"] == "1"
+    assert "metadata" in line
+    assert line["metadata"]["batch_id"] == "batch1"

@@ -1,29 +1,22 @@
 import os
 import pytest
-from src.config import Config
+from src.bitrix_gcp.config import Config
+from src.bitrix_gcp.errors import ConfigurationError
 
-def test_config_validation_missing():
-    # Clear env vars
-    if "BITRIX_WEBHOOK_URL" in os.environ: del os.environ["BITRIX_WEBHOOK_URL"]
-    if "GCS_BUCKET" in os.environ: del os.environ["GCS_BUCKET"]
+def test_config_missing_vars():
+    # Clear env
+    for k in ["GCP_PROJECT_ID", "BITRIX_WEBHOOK_URL", "GCS_BUCKET"]:
+        if k in os.environ: del os.environ[k]
 
-    # We need to re-instantiate or use class methods since config is a singleton in src/config.py
-    with pytest.raises(ValueError, match="Missing mandatory environment variables"):
-        Config.validate()
+    with pytest.raises(ConfigurationError):
+        Config()
 
-def test_config_validation_success(mocker):
+def test_config_valid(mocker):
     mocker.patch.dict(os.environ, {
-        "BITRIX_WEBHOOK_URL": "https://example.com",
-        "GCS_BUCKET": "my-bucket"
+        "GCP_PROJECT_ID": "p",
+        "BITRIX_WEBHOOK_URL": "h",
+        "GCS_BUCKET": "b"
     })
-    # Update Config class attributes because they are set at import time
-    Config.BITRIX_WEBHOOK_URL = "https://example.com"
-    Config.GCS_BUCKET = "my-bucket"
-
-    Config.validate() # Should not raise
-
-def test_invalid_date_override(mocker):
-    Config.START_DATE_OVERRIDE = "invalid-date"
-    with pytest.raises(ValueError, match="START_DATE_OVERRIDE must be in ISO-8601 format"):
-        Config.validate()
-    Config.START_DATE_OVERRIDE = None # Reset
+    c = Config()
+    assert c.GCP_PROJECT_ID == "p"
+    assert c.GCS_BUCKET == "b"

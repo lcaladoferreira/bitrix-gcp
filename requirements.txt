@@ -1,6 +1,7 @@
 google-cloud-storage
 google-cloud-bigquery
 google-cloud-logging
+google-cloud-secret-manager
 requests
 python-json-logger
 pytest
