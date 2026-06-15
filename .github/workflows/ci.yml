@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install ruff pytest pytest-mock
+          pip install ruff pytest pytest-mock pytest-cov
 
       - name: Ruff Lint
         run: ruff check .
@@ -33,7 +33,28 @@ jobs:
           BITRIX_WEBHOOK_URL: http://test-webhook
           GCS_BUCKET: test-bucket
           PYTHONPATH: src
-        run: pytest
+        run: pytest --cov=src/bitrix_gcp --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
 
       - name: Docker Build Check
         run: docker build -t bitrix-gcp-test .
+
+  validate_terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive infra/
+      - name: Terraform Validate
+        run: |
+          cd infra/terraform/environments/prod
+          terraform init -backend=false
+          terraform validate

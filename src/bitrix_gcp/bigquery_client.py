@@ -23,16 +23,17 @@ class BigQueryClient:
             raise BigQueryError(f"Watermark fetch failed: {str(e)}")
         return None
 
-    def create_table_if_not_exists(self, table_id: str, schema_obj: EntitySchema) -> None:
-        def _to_bq_field(f):
-            if "fields" in f:
-                return bigquery.SchemaField(
-                    f["name"], f["type"], mode=f.get("mode", "NULLABLE"),
-                    fields=[_to_bq_field(sub) for sub in f["fields"]]
-                )
-            return bigquery.SchemaField(f["name"], f["type"], mode=f.get("mode", "NULLABLE"))
+    @staticmethod
+    def _to_bq_field(f: dict) -> bigquery.SchemaField:
+        if "fields" in f:
+            return bigquery.SchemaField(
+                f["name"], f["type"], mode=f.get("mode", "NULLABLE"),
+                fields=[BigQueryClient._to_bq_field(sub) for sub in f["fields"]]
+            )
+        return bigquery.SchemaField(f["name"], f["type"], mode=f.get("mode", "NULLABLE"))
 
-        bq_schema = [_to_bq_field(f) for f in schema_obj.bq_schema]
+    def create_table_if_not_exists(self, table_id: str, schema_obj: EntitySchema) -> None:
+        bq_schema = [self._to_bq_field(f) for f in schema_obj.bq_schema]
         table = bigquery.Table(table_id, schema=bq_schema)
         if schema_obj.partition_field:
             table.time_partitioning = bigquery.TimePartitioning(field=schema_obj.partition_field)
@@ -46,18 +47,10 @@ class BigQueryClient:
             self.client.create_table(table)
 
     def load_staging(self, uris: List[str], staging_table_id: str, schema_obj: EntitySchema) -> int:
-        def _to_bq_field(f):
-            if "fields" in f:
-                return bigquery.SchemaField(
-                    f["name"], f["type"], mode=f.get("mode", "NULLABLE"),
-                    fields=[_to_bq_field(sub) for sub in f["fields"]]
-                )
-            return bigquery.SchemaField(f["name"], f["type"], mode=f.get("mode", "NULLABLE"))
-
         job_config = bigquery.LoadJobConfig(
             source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
             write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
-            schema=[_to_bq_field(f) for f in schema_obj.bq_schema],
+            schema=[self._to_bq_field(f) for f in schema_obj.bq_schema],
             ignore_unknown_values=True,
         )
         load_job = self.client.load_table_from_uri(uris, staging_table_id, job_config=job_config)

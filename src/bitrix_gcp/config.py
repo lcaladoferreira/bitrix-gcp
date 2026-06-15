@@ -37,4 +37,20 @@ class Config:
         except Exception as e:
             raise ConfigurationError(f"Secret {secret_id} load failed: {str(e)}")
 
-config = Config()
+
+_config_instance = None
+
+
+def get_config() -> Config:
+    """Lazy initialization of the Config singleton."""
+    global _config_instance
+    if _config_instance is None:
+        _config_instance = Config()
+    return _config_instance
+
+
+def __getattr__(name: str):
+    """Module-level __getattr__ for lazy config access (Python 3.7+)."""
+    if name == "config":
+        return get_config()
+    raise AttributeError(f"module {__name__} has no attribute {name}")
