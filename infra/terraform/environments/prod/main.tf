@@ -5,7 +5,7 @@ provider "google" {
 
 module "gcs" {
   source      = "../../modules/gcs"
-  bucket_name = "${var.project_id}-bitrix-staging-dev"
+  bucket_name = "${var.project_id}-bitrix-staging-prod"
   location    = var.region
 }
 
@@ -27,7 +27,7 @@ module "secret_manager" {
 
 module "cloud_run_job" {
   source                = "../../modules/cloud_run_job"
-  job_name              = "bitrix-sync-dev"
+  job_name              = "bitrix-sync-prod"
   location              = var.region
   image_url             = "gcr.io/${var.project_id}/bitrix-sync:latest"
   project_id            = var.project_id
@@ -38,8 +38,8 @@ module "cloud_run_job" {
 
 module "cloud_scheduler" {
   source                = "../../modules/cloud_scheduler"
-  name                  = "bitrix-sync-dev-trigger"
-  schedule              = "0 * * * *"
+  name                  = "bitrix-sync-prod-trigger"
+  schedule              = "0 2 * * *" # Daily at 2am
   region                = var.region
   job_uri               = module.cloud_run_job.job_uri
   service_account_email = var.service_account_email
@@ -57,5 +57,5 @@ variable "region" {
 
 variable "service_account_email" {
   type        = string
-  description = "The service account email to run the job"
+  description = "The service account email"
 }
