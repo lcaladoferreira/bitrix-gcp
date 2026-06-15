@@ -40,6 +40,7 @@ class BitrixClient:
 
     def get_entities(self, entity_type: str, watermark_field: str = "DATE_MODIFY",
                      start_date: Optional[str] = None) -> Generator[Dict[str, Any], None, None]:
+        """Generic generator for Bitrix24 entities."""
         if entity_type == "activities":
             method = "crm.activity.list"
         else:

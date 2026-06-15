@@ -19,7 +19,7 @@ class Config:
     def _get_required(self, name: str) -> str:
         val = os.getenv(name)
         if not val:
-            raise ConfigurationError(f"Missing environment variable: {name}")
+            raise ConfigurationError(f"Missing required environment variable: {name}")
         return val
 
     def _load_secret(self, env_name: str, secret_env_name: str) -> str:

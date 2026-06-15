@@ -5,6 +5,7 @@ from bitrix_gcp.pipeline import Pipeline
 from bitrix_gcp.errors import BitrixGCPError
 
 def main():
+    """Entry point for the Bitrix24 to BigQuery pipeline."""
     try:
         pipeline = Pipeline()
         pipeline.run(config.ENTITY_NAME)
@@ -12,7 +13,7 @@ def main():
         logger.error(f"Pipeline error: {str(e)}")
         sys.exit(1)
     except Exception as e:
-        logger.critical(f"Unexpected error: {str(e)}", exc_info=True)
+        logger.critical(f"Unexpected system error: {str(e)}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":

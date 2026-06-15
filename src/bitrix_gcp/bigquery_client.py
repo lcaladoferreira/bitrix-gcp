@@ -10,6 +10,7 @@ class BigQueryClient:
         self.client = bigquery.Client(project=project_id)
 
     def get_watermark(self, table_id: str, field: str) -> Optional[str]:
+        """Retrieves the maximum watermark from the target table."""
         query = f"SELECT MAX({field}) as last_watermark FROM `{table_id}`"
         try:
             query_job = self.client.query(query)
