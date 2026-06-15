@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    env_file: .env
+    volumes:
+      - ./credentials:/app/credentials
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service-account.json
+      - PYTHONPATH=/app/src
+
+  test:
+    build: .
+    env_file: .env
+    volumes:
+      - ./credentials:/app/credentials
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service-account.json
+      - PYTHONPATH=/app/src
+    command: pytest tests/ -v
