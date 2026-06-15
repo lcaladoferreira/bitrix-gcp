@@ -16,7 +16,8 @@ class BitrixClient:
         retry_strategy = Retry(
             total=5,
             backoff_factor=2,
-            status_forcelist=[429, 500, 502, 503, 504]
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"]
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session = requests.Session()

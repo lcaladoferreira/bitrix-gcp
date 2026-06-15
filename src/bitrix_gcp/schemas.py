@@ -43,7 +43,8 @@ LEAD_SCHEMA = EntitySchema(
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "STATUS_ID", "type": "STRING", "mode": "NULLABLE"},
-    ]
+    ],
+    clustering_fields=["ID", "STATUS_ID"]
 )
 
 CONTACT_SCHEMA = EntitySchema(
@@ -53,7 +54,8 @@ CONTACT_SCHEMA = EntitySchema(
         {"name": "LAST_NAME", "type": "STRING", "mode": "NULLABLE"},
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
-    ]
+    ],
+    clustering_fields=["ID"]
 )
 
 COMPANY_SCHEMA = EntitySchema(
@@ -62,7 +64,8 @@ COMPANY_SCHEMA = EntitySchema(
         {"name": "TITLE", "type": "STRING", "mode": "NULLABLE"},
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
-    ]
+    ],
+    clustering_fields=["ID"]
 )
 
 ACTIVITY_SCHEMA = EntitySchema(
@@ -74,7 +77,8 @@ ACTIVITY_SCHEMA = EntitySchema(
     ],
     primary_key="ID",
     watermark_field="LAST_UPDATED",
-    partition_field="LAST_UPDATED"
+    partition_field="LAST_UPDATED",
+    clustering_fields=["ID"]
 )
 
 ENTITY_MAP = {

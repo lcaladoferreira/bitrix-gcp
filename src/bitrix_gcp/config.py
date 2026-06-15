@@ -19,7 +19,7 @@ class Config:
     def _get_required(self, name: str) -> str:
         val = os.getenv(name)
         if not val:
-            raise ConfigurationError(f"Missing environment variable: {name}")
+            raise ConfigurationError(f"Missing required environment variable: {name}")
         return val
 
     def _load_secret(self, env_name: str, secret_env_name: str) -> str:
@@ -35,6 +35,6 @@ class Config:
             response = client.access_secret_version(request={"name": name})
             return response.payload.data.decode("UTF-8")
         except Exception as e:
-            raise ConfigurationError(f"Secret {secret_id} load failed: {str(e)}")
+            raise ConfigurationError(f"Failed to load secret {secret_id}: {str(e)}")
 
 config = Config()
