@@ -41,17 +41,6 @@ class BigQueryClient:
             ignore_unknown_values=True,
         )
 
-        # We'll also add the payload column to the staging table if we want it there,
-        # but since we want the FULL original record, let's rethink.
-        # Actually, if we load from JSONL, BigQuery can put the whole JSON into a column if configured.
-        # But wait, source_format JSON loads fields into columns.
-
-        # To get the full payload as JSON, we might need to pre-process the records to have a 'payload' field
-        # that contains the JSON string of the whole record, or use BQ's JSON type support.
-
-        # In src/storage_client.py, we are dumping the whole record.
-        # If we want a 'payload' column, we should probably wrap the record in storage_client.
-
         load_job = self.client.load_table_from_uri(
             gcs_uris, staging_table_id, job_config=job_config
         )
