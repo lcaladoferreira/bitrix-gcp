@@ -1,6 +1,5 @@
 import json
-import pytest
-from src.bitrix_gcp.storage_client import StorageClient
+from bitrix_gcp.storage_client import StorageClient
 
 def test_upload_jsonl_format(mocker):
     mocker.patch("google.cloud.storage.Client")

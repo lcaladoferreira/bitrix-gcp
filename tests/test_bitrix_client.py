@@ -1,5 +1,4 @@
-import pytest
-from src.bitrix_gcp.bitrix_client import BitrixClient
+from bitrix_gcp.bitrix_client import BitrixClient
 
 def test_bitrix_client_masking():
     client = BitrixClient("https://example.com/rest/1/secret_key/")

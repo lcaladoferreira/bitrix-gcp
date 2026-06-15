@@ -1,10 +1,11 @@
 import json
 import gzip
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from google.cloud import storage
-from src.bitrix_gcp.logging_config import logger
-from src.bitrix_gcp.errors import StorageError
+from bitrix_gcp.logging_config import logger
+from bitrix_gcp.errors import StorageError
+from bitrix_gcp.schemas import calculate_payload_hash
 
 class StorageClient:
     def __init__(self, bucket_name: str):
@@ -17,20 +18,17 @@ class StorageClient:
                     compress: bool = False) -> str:
         """
         Uploads records as JSONL to GCS with deterministic paths.
-        gs://bucket/bitrix/entity_name/load_date=YYYY-MM-DD/batch_id=.../part-00001.jsonl
         """
-        load_date = datetime.utcnow().strftime("%Y-%m-%d")
+        load_date = datetime.now().strftime("%Y-%m-%d")
         file_ext = "jsonl.gz" if compress else "jsonl"
         blob_name = f"bitrix/{entity_name}/load_date={load_date}/batch_id={batch_id}/part-{part_number:05d}.{file_ext}"
 
         blob = self.bucket.blob(blob_name)
+        extracted_at = datetime.now().isoformat()
 
-        # Prepare content with metadata
-        extracted_at = datetime.utcnow().isoformat()
         processed_data = []
         for rec in records:
-            # We wrap the record to match the required BQ schema:
-            # Structured columns + 'payload' (full record) + 'metadata'
+            # Metadata as requested
             rec_with_meta = {
                 "ID": rec.get("ID"),
                 "TITLE": rec.get("TITLE"),
@@ -39,27 +37,32 @@ class StorageClient:
                 "STAGE_ID": rec.get("STAGE_ID"),
                 "OPPORTUNITY": rec.get("OPPORTUNITY"),
                 "CURRENCY_ID": rec.get("CURRENCY_ID"),
-                "ASSIGNED_BY_ID": rec.get("ASSIGNED_BY_ID"),
-                "payload": rec,  # The full original record
+                "NAME": rec.get("NAME"),
+                "LAST_NAME": rec.get("LAST_NAME"),
+                "STATUS_ID": rec.get("STATUS_ID"),
+                "SUBJECT": rec.get("SUBJECT"),
+                "CREATED": rec.get("CREATED"),
+                "LAST_UPDATED": rec.get("LAST_UPDATED"),
+                "payload": rec,
                 "metadata": {
                     "batch_id": batch_id,
                     "extracted_at": extracted_at,
                     "source_entity": entity_name,
-                    "source_system": "bitrix24"
+                    "source_system": "bitrix24",
+                    "raw_payload_hash": calculate_payload_hash(rec)
                 }
             }
             processed_data.append(json.dumps(rec_with_meta, ensure_ascii=False))
 
         content = "\n".join(processed_data).encode("utf-8")
-
         if compress:
             content = gzip.compress(content)
 
         try:
-            blob.upload_from_string(content, content_type="application/x-ndjson")
+            blob.upload_from_string(content, content_type="application/x-ndjson", timeout=60)
             uri = f"gs://{self.bucket_name}/{blob_name}"
-            logger.info(f"Uploaded chunk to {uri}", extra={"records": len(records)})
+            logger.info(f"Uploaded to {uri}", extra={"records": len(records)})
             return uri
         except Exception as e:
-            logger.error(f"Failed to upload to GCS: {str(e)}")
+            logger.error(f"GCS Upload failed: {str(e)}")
             raise StorageError(f"GCS Upload failed: {str(e)}")

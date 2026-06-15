@@ -1,11 +1,11 @@
-# Security
-All secrets are managed via Google Cloud Secret Manager.
+# Security and Secret Manager
 
-## Secret Manager Integration
-The application uses the `google-cloud-secret-manager` client to retrieve the `BITRIX_WEBHOOK_URL` at runtime.
-
-### IAM Roles
-The Service Account requires `roles/secretmanager.secretAccessor` on the specific secret.
+## Secret Manager
+The pipeline retrieves sensitive credentials like the `BITRIX_WEBHOOK_URL` from Google Cloud Secret Manager at runtime.
 
 ### Configuration
-Set `BITRIX_WEBHOOK_SECRET_NAME` to the name of the secret in GCP. The app will fetch the `latest` version.
+1. Create a secret named `bitrix_webhook_url`.
+2. Set the environment variable `BITRIX_WEBHOOK_SECRET_NAME=bitrix_webhook_url`.
+
+### IAM
+The Cloud Run Job Service Account must have the `roles/secretmanager.secretAccessor` role.

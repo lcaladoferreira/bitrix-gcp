@@ -1,6 +1,5 @@
-import pytest
-from src.bitrix_gcp.bigquery_client import BigQueryClient
-from src.bitrix_gcp.schemas import DEAL_SCHEMA
+from bitrix_gcp.bigquery_client import BigQueryClient
+from bitrix_gcp.schemas import DEAL_SCHEMA
 
 def test_merge_query_generation(mocker):
     mocker.patch("google.cloud.bigquery.Client")

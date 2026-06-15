@@ -1,28 +1,36 @@
-# Bitrix24 to Google BigQuery Data Pipeline
+# Bitrix24 to BigQuery Production Pipeline
 
-Production-grade Extract-Stage-Load-Merge (ESLM) pipeline for synchronizing high-volume Bitrix24 CRM data to Google BigQuery.
+Professional-grade data pipeline to synchronize Bitrix24 CRM data to Google BigQuery using Cloud Run Jobs and GCS.
 
-## Features
-- **Multi-entity support**: Deals, Leads, Contacts, etc.
-- **Resilient**: Exponential backoff, rate-limit handling, and retries.
-- **Audit & Idempotency**: Full tracking of batches and atomic UPSERTs.
-- **Cloud-Native**: Fully integrated with GCS, BigQuery, Cloud Run, and Secret Manager.
-- **Infrastructure as Code**: Terraform modules included.
+## Architecture
+- **Compute**: Cloud Run Jobs (Long-running batch execution)
+- **Staging**: Google Cloud Storage (JSONL with metadata and hashes)
+- **Warehouse**: BigQuery (Staging, Final, and Audit tables)
+- **Orchestration**: Cloud Scheduler
+- **Security**: Secret Manager & IAM Least Privilege
+- **IaC**: Terraform
 
-## Quick Start
-1. **Local Run**:
+## Local Development
+```bash
+./scripts/run_local.sh
+```
+
+## Deployment
+1. Initialize Terraform:
    ```bash
-   ./scripts/run_local.sh
+   cd infra/terraform/environments/dev
+   terraform init
+   terraform apply
+   ```
+2. Build and Push Docker:
+   ```bash
+   docker build -t gcr.io/PROJECT/bitrix-sync .
+   docker push gcr.io/PROJECT/bitrix-sync
    ```
 
-2. **Test**:
-   ```bash
-   pytest
-   ```
-
-3. **Deploy**:
-   ```bash
-   ./scripts/deploy.sh
-   ```
-
-Refer to `docs/` for detailed documentation.
+## Supported Entities
+- Deals
+- Leads
+- Contacts
+- Companies
+- Activities

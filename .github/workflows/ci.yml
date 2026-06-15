@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  lint-and-test:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,20 +22,31 @@ jobs:
           pip install -r requirements.txt
           pip install ruff pytest pytest-mock
 
-      - name: Lint with ruff
+      - name: Ruff Lint
         run: ruff check .
 
-      - name: Compile check
+      - name: Python Compile Check
         run: python -m compileall .
 
-      - name: Run tests
+      - name: Run Tests
         env:
           GCP_PROJECT_ID: test-project
-          BITRIX_WEBHOOK_URL: https://example.bitrix24.com/rest/1/abc/
+          BITRIX_WEBHOOK_URL: https://example.com/rest/1/abc/
           GCS_BUCKET: test-bucket
-        run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/src
-          pytest
+          PYTHONPATH: src
+        run: pytest
 
-      - name: Docker build check
+      - name: Docker Build Check
         run: docker build -t bitrix-gcp-test .
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive infra/terraform
+
+      - name: Terraform Validate Dev
+        run: |
+          cd infra/terraform/environments/dev
+          terraform init -backend=false
+          terraform validate

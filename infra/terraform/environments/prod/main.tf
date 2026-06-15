@@ -5,7 +5,7 @@ provider "google" {
 
 module "gcs" {
   source      = "../../modules/gcs"
-  bucket_name = "${var.project_id}-bitrix-staging-dev"
+  bucket_name = "${var.project_id}-bitrix-staging-prod"
   location    = var.region
 }
 
@@ -20,6 +20,6 @@ module "iam" {
   service_account_email = var.service_account_email
 }
 
-variable "project_id" { default = "dev-proj" }
+variable "project_id" { default = "prod-proj" }
 variable "region" { default = "us-central1" }
-variable "service_account_email" { default = "sa@dev-proj.iam.gserviceaccount.com" }
+variable "service_account_email" { default = "sa@prod-proj.iam.gserviceaccount.com" }

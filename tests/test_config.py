@@ -1,12 +1,13 @@
 import os
 import pytest
-from src.bitrix_gcp.config import Config
-from src.bitrix_gcp.errors import ConfigurationError
+from bitrix_gcp.config import Config
+from bitrix_gcp.errors import ConfigurationError
 
 def test_config_missing_vars():
     # Clear env
     for k in ["GCP_PROJECT_ID", "BITRIX_WEBHOOK_URL", "GCS_BUCKET"]:
-        if k in os.environ: del os.environ[k]
+        if k in os.environ:
+            del os.environ[k]
 
     with pytest.raises(ConfigurationError):
         Config()
