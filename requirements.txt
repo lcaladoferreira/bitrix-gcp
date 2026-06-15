@@ -6,4 +6,5 @@ requests
 python-json-logger
 pytest
 pytest-mock
+ruff
 urllib3

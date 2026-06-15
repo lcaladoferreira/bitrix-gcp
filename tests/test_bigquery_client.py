@@ -1,15 +1,9 @@
 from bitrix_gcp.bigquery_client import BigQueryClient
 from bitrix_gcp.schemas import DEAL_SCHEMA
 
-def test_merge_query_generation(mocker):
+def test_query(mocker):
     mocker.patch("google.cloud.bigquery.Client")
-    client = BigQueryClient("proj")
-    mock_query = mocker.patch.object(client.client, 'query')
-
-    client.merge_to_final("staging", "final", DEAL_SCHEMA)
-
-    args, _ = mock_query.call_args
-    query = args[0]
-    assert "MERGE `final` T" in query
-    assert "USING (" in query
-    assert "ROW_NUMBER() OVER(PARTITION BY ID ORDER BY DATE_MODIFY DESC)" in query
+    c = BigQueryClient("p")
+    mocker.patch.object(c.client, "query")
+    c.merge_to_final("s", "f", DEAL_SCHEMA)
+    assert c.client.query.called

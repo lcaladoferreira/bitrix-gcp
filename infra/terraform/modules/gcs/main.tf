@@ -15,8 +15,15 @@ resource "google_storage_bucket" "staging" {
   }
 }
 
-variable "bucket_name" {}
-variable "location" {}
+variable "bucket_name" {
+  type        = string
+  description = "Name of the GCS bucket for staging"
+}
+
+variable "location" {
+  type        = string
+  description = "GCP region"
+}
 
 output "bucket_name" {
   value = google_storage_bucket.staging.name

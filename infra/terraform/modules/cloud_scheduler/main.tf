@@ -15,8 +15,8 @@ resource "google_cloud_scheduler_job" "sync_trigger" {
   }
 }
 
-variable "name" {}
-variable "schedule" {}
-variable "region" {}
-variable "job_uri" {}
-variable "service_account_email" {}
+variable "name" { type = string }
+variable "schedule" { type = string }
+variable "region" { type = string }
+variable "job_uri" { type = string }
+variable "service_account_email" { type = string }

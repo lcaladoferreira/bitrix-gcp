@@ -33,22 +33,17 @@ DEAL_SCHEMA = EntitySchema(
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "STAGE_ID", "type": "STRING", "mode": "NULLABLE"},
         {"name": "OPPORTUNITY", "type": "FLOAT", "mode": "NULLABLE"},
-        {"name": "CURRENCY_ID", "type": "STRING", "mode": "NULLABLE"},
-    ],
-    clustering_fields=["ID", "STAGE_ID"]
+    ]
 )
 
 LEAD_SCHEMA = EntitySchema(
     name="leads",
     bq_schema=get_base_schema_fields() + [
         {"name": "TITLE", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "NAME", "type": "STRING", "mode": "NULLABLE"},
-        {"name": "LAST_NAME", "type": "STRING", "mode": "NULLABLE"},
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "STATUS_ID", "type": "STRING", "mode": "NULLABLE"},
-    ],
-    clustering_fields=["ID", "STATUS_ID"]
+    ]
 )
 
 CONTACT_SCHEMA = EntitySchema(
@@ -58,8 +53,7 @@ CONTACT_SCHEMA = EntitySchema(
         {"name": "LAST_NAME", "type": "STRING", "mode": "NULLABLE"},
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
-    ],
-    clustering_fields=["ID"]
+    ]
 )
 
 COMPANY_SCHEMA = EntitySchema(
@@ -68,8 +62,7 @@ COMPANY_SCHEMA = EntitySchema(
         {"name": "TITLE", "type": "STRING", "mode": "NULLABLE"},
         {"name": "DATE_CREATE", "type": "TIMESTAMP", "mode": "NULLABLE"},
         {"name": "DATE_MODIFY", "type": "TIMESTAMP", "mode": "NULLABLE"},
-    ],
-    clustering_fields=["ID"]
+    ]
 )
 
 ACTIVITY_SCHEMA = EntitySchema(
@@ -81,8 +74,7 @@ ACTIVITY_SCHEMA = EntitySchema(
     ],
     primary_key="ID",
     watermark_field="LAST_UPDATED",
-    partition_field="LAST_UPDATED",
-    clustering_fields=["ID"]
+    partition_field="LAST_UPDATED"
 )
 
 ENTITY_MAP = {
@@ -94,6 +86,5 @@ ENTITY_MAP = {
 }
 
 def calculate_payload_hash(payload: Dict[str, Any]) -> str:
-    """Calculates a deterministic hash for the payload."""
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode('utf-8')
     return hashlib.sha256(encoded).hexdigest()

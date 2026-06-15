@@ -22,13 +22,12 @@ class Pipeline:
             raise PipelineError(f"Entity {entity_name} not supported.")
 
         logger.info(f"Starting {entity_name} pipeline", extra={"batch_id": self.batch_id})
-
         final_table_id = f"{config.GCP_PROJECT_ID}.{config.BQ_FINAL_DATASET}.{entity_name}"
         staging_table_id = f"{config.GCP_PROJECT_ID}.{config.BQ_STAGING_DATASET}.{entity_name}_staging"
 
         watermark_start = None
         if config.FORCE_FULL_SYNC:
-            logger.info("FORCE_FULL_SYNC is TRUE")
+            logger.info("Full sync forced.")
         elif config.START_DATE_OVERRIDE:
             watermark_start = config.START_DATE_OVERRIDE
         else:
@@ -36,43 +35,31 @@ class Pipeline:
 
         self.audit.log_start(self.batch_id, entity_name, watermark_start=watermark_start)
 
-        gcs_uris = []
+        uris = []
         chunk = []
         part = 0
-        extracted = 0
-
+        total = 0
         try:
             for record in self.bitrix.get_entities(entity_name, watermark_field=schema_obj.watermark_field, start_date=watermark_start):
                 chunk.append(record)
-                extracted += 1
+                total += 1
                 if len(chunk) >= config.CHUNK_SIZE:
                     part += 1
-                    gcs_uris.append(self.storage.upload_jsonl(chunk, entity_name, self.batch_id, part))
+                    uris.append(self.storage.upload_jsonl(chunk, entity_name, self.batch_id, part))
                     chunk = []
-
             if chunk:
                 part += 1
-                gcs_uris.append(self.storage.upload_jsonl(chunk, entity_name, self.batch_id, part))
+                uris.append(self.storage.upload_jsonl(chunk, entity_name, self.batch_id, part))
 
-            if not gcs_uris:
+            if not uris:
                 self.audit.log_finish(self.batch_id, "SUCCESS", entity_name=entity_name, records_extracted=0)
                 return
 
             self.bq.create_table_if_not_exists(staging_table_id, schema_obj)
-            loaded = self.bq.load_staging(gcs_uris, staging_table_id, schema_obj)
-
+            loaded = self.bq.load_staging(uris, staging_table_id, schema_obj)
             self.bq.create_table_if_not_exists(final_table_id, schema_obj)
             merged = self.bq.merge_to_final(staging_table_id, final_table_id, schema_obj)
-
-            self.audit.log_finish(
-                self.batch_id, "SUCCESS",
-                entity_name=entity_name,
-                records_extracted=extracted,
-                records_loaded=loaded,
-                records_merged=merged,
-                gcs_paths=gcs_uris
-            )
+            self.audit.log_finish(self.batch_id, "SUCCESS", entity_name=entity_name, records_extracted=total, records_loaded=loaded, records_merged=merged, gcs_paths=uris)
         except Exception as e:
-            logger.error(f"Pipeline failed: {str(e)}")
             self.audit.log_finish(self.batch_id, "FAILED", entity_name=entity_name, error_message=str(e))
             raise PipelineError(str(e))

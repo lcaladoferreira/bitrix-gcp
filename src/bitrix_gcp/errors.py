@@ -1,23 +1,23 @@
 class BitrixGCPError(Exception):
-    """Base exception for the pipeline."""
+    """Base error class."""
     pass
 
 class ConfigurationError(BitrixGCPError):
-    """Raised when environment variables are missing or invalid."""
+    """Raised on missing or invalid config."""
     pass
 
 class BitrixAPIError(BitrixGCPError):
-    """Raised when Bitrix24 API returns an error or is unreachable."""
+    """Raised on API failures."""
     pass
 
 class StorageError(BitrixGCPError):
-    """Raised when GCS operations fail."""
+    """Raised on GCS failures."""
     pass
 
 class BigQueryError(BitrixGCPError):
-    """Raised when BigQuery operations fail."""
+    """Raised on BigQuery failures."""
     pass
 
 class PipelineError(BitrixGCPError):
-    """Raised when the orchestration fails."""
+    """Raised on orchestration failures."""
     pass

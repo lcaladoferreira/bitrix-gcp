@@ -1,6 +1,6 @@
 import time
 import requests
-from typing import Dict, Any, Generator, Optional, List
+from typing import Dict, Any, Generator, Optional
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from bitrix_gcp.logging_config import logger
@@ -16,8 +16,7 @@ class BitrixClient:
         retry_strategy = Retry(
             total=5,
             backoff_factor=2,
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"]
+            status_forcelist=[429, 500, 502, 503, 504]
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session = requests.Session()
@@ -27,61 +26,43 @@ class BitrixClient:
 
     def _call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = f"{self.webhook_url}/{method}"
-        # Masking secret in logs
-        safe_url = url.split("/rest/")[0] + "/rest/REDACTED"
-
         try:
-            logger.debug(f"Calling Bitrix API: {safe_url}", extra={"params": params})
             response = self.session.post(url, json=params, timeout=self.timeout)
-
             if response.status_code == 503:
-                logger.warning("Bitrix query limit exceeded (503). Retrying after delay...")
+                logger.warning("Bitrix query limit exceeded (503). Retrying after 5s delay...")
                 time.sleep(5)
                 return self._call(method, params)
-
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            logger.error(f"Bitrix API request failed: {str(e)}", extra={"url": safe_url})
             raise BitrixAPIError(f"API Error: {str(e)}")
 
     def get_entities(self, entity_type: str, watermark_field: str = "DATE_MODIFY",
-                     start_date: Optional[str] = None,
-                     select_fields: Optional[List[str]] = None) -> Generator[Dict[str, Any], None, None]:
-        """
-        Generic generator for Bitrix24 entities.
-        """
+                     start_date: Optional[str] = None) -> Generator[Dict[str, Any], None, None]:
         if entity_type == "activities":
-             method = "crm.activity.list"
+            method = "crm.activity.list"
         else:
-             method = f"crm.{entity_type}.list"
-
-        if not select_fields:
-            select_fields = ["*", "UF_*"]
+            method = f"crm.{entity_type}.list"
 
         params = {
-            "select": select_fields,
+            "select": ["*", "UF_*"],
             "order": {watermark_field: "ASC"},
             "filter": {},
             "start": -1
         }
-
         if start_date:
             params["filter"][f">{watermark_field}"] = start_date
 
-        total_yielded = 0
+        total = 0
         while True:
             result = self._call(method, params)
             records = result.get("result", [])
             next_offset = result.get("next")
-
             for record in records:
                 yield record
-                total_yielded += 1
-
+                total += 1
             if next_offset:
                 params["start"] = next_offset
-                logger.info(f"Fetched {total_yielded} {entity_type} records. Next: {next_offset}")
+                logger.info(f"Fetched {total} {entity_type} records. Next offset: {next_offset}")
             else:
-                logger.info(f"Finished fetching {entity_type}. Total: {total_yielded}")
                 break

@@ -22,5 +22,5 @@ resource "google_project_iam_member" "sa_secret" {
   member  = "serviceAccount:${var.service_account_email}"
 }
 
-variable "project_id" {}
-variable "service_account_email" {}
+variable "project_id" { type = string }
+variable "service_account_email" { type = string }

@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Optional
 from google.cloud import bigquery
-from bitrix_gcp.logging_config import logger
 
 class AuditManager:
     def __init__(self, client: bigquery.Client, dataset_id: str):
@@ -23,13 +22,11 @@ class AuditManager:
             bigquery.SchemaField("watermark_start", "TIMESTAMP"),
             bigquery.SchemaField("watermark_end", "TIMESTAMP"),
             bigquery.SchemaField("error_message", "STRING"),
-            bigquery.SchemaField("job_id", "STRING"),
         ]
         table = bigquery.Table(self.table_id, schema=schema)
         try:
             self.client.get_table(self.table_id)
         except Exception:
-            logger.info(f"Creating audit table {self.table_id}")
             self.client.create_table(table)
 
     def log_start(self, batch_id: str, entity_name: str, watermark_start: Optional[str] = None):
@@ -46,7 +43,7 @@ class AuditManager:
         row = {
             "batch_id": batch_id,
             "entity_name": kwargs.get("entity_name"),
-            "started_at": datetime.now().isoformat(), # Technically should be matched or use a separate strategy
+            "started_at": datetime.now().isoformat(),
             "finished_at": datetime.now().isoformat(),
             "status": status,
             "records_extracted": kwargs.get("records_extracted"),

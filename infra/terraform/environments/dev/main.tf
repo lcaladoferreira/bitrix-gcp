@@ -20,6 +20,31 @@ module "iam" {
   service_account_email = var.service_account_email
 }
 
-variable "project_id" { default = "dev-proj" }
+module "secret_manager" {
+  source    = "../../modules/secret_manager"
+  secret_id = "bitrix_webhook_url"
+}
+
+module "cloud_run_job" {
+  source                = "../../modules/cloud_run_job"
+  job_name              = "bitrix-sync-dev"
+  location              = var.region
+  image_url             = "gcr.io/${var.project_id}/bitrix-sync:latest"
+  project_id            = var.project_id
+  bucket_name           = module.gcs.bucket_name
+  service_account_email = var.service_account_email
+  secret_name           = module.secret_manager.secret_name
+}
+
+module "cloud_scheduler" {
+  source                = "../../modules/cloud_scheduler"
+  name                  = "bitrix-sync-dev-trigger"
+  schedule              = "0 * * * *"
+  region                = var.region
+  job_uri               = module.cloud_run_job.job_uri
+  service_account_email = var.service_account_email
+}
+
+variable "project_id" { default = "dev-project" }
 variable "region" { default = "us-central1" }
-variable "service_account_email" { default = "sa@dev-proj.iam.gserviceaccount.com" }
+variable "service_account_email" { default = "sa@dev-project.iam.gserviceaccount.com" }
