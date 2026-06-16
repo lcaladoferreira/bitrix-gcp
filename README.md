@@ -1,4 +1,3 @@
-cat > README.md << 'ENDOFFILE'
 # Bitrix24 to BigQuery Data Pipeline
 
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
@@ -75,4 +74,3 @@ terraform apply
 - [Architecture Details](docs/architecture.md)
 - [Operational Runbook](docs/runbook.md)
 - [Changelog](CHANGELOG.md)
-ENDOFFILE
