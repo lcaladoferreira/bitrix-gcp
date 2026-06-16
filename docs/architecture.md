@@ -43,3 +43,36 @@ Query run history:
 ```sql
 SELECT * FROM `bitrix_raw.pipeline_audit` ORDER BY started_at DESC
 ```
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant M as main.py
+    participant P as Pipeline
+    participant BC as BitrixClient
+    participant SC as StorageClient
+    participant BQ as BigQueryClient
+    participant AM as AuditManager
+
+    M->>P: run(entity)
+    P->>AM: log_start(batch_id, entity)
+    P->>BQ: get_watermark(final_table, field)
+    BQ-->>P: last_watermark
+
+    loop Extraction Loop
+        P->>BC: get_entities(entity, start_date)
+        BC-->>P: records_chunk
+        P->>SC: upload_jsonl(records_chunk, batch_id)
+        SC-->>P: gcs_uri
+    end
+
+    P->>BQ: load_staging(gcs_uris, staging_table)
+    BQ-->>P: records_loaded
+    P->>BQ: merge_to_final(staging_table, final_table)
+    BQ-->>P: records_merged
+
+    P->>AM: log_finish(batch_id, SUCCESS, metrics)
+    AM-->>P:
+    P-->>M: return
+```

@@ -1,6 +1,6 @@
 import pytest
 from bitrix_gcp.pipeline import Pipeline
-from bitrix_gcp.errors import PipelineError
+from bitrix_gcp.errors import PipelineError, BitrixAPIError
 from unittest.mock import patch
 
 def test_run_unsupported_entity_raises_error(mock_pipeline_deps):
@@ -50,3 +50,16 @@ def test_run_uploads_chunks_to_gcs(mock_config, mock_pipeline_deps):
 
     # 3 records with chunk size 2 should result in 2 uploads
     assert mock_pipeline_deps.storage.upload_jsonl.call_count == 2
+
+def test_run_raises_pipeline_error_on_api_failure(mock_pipeline_deps):
+    # Mock bitrix.get_entities to raise BitrixAPIError
+    mock_pipeline_deps.bitrix.get_entities.side_effect = BitrixAPIError("API Failure")
+
+    pipeline = Pipeline()
+    with pytest.raises(PipelineError, match="API Failure"):
+        pipeline.run("deals")
+
+    # Assert audit.log_finish is called with "FAILED"
+    mock_pipeline_deps.audit.log_finish.assert_called_with(
+        pipeline.batch_id, "FAILED", entity_name="deals", error_message="API Failure"
+    )
