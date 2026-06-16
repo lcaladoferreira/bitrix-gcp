@@ -1,3 +1,4 @@
+cat > README.md << 'ENDOFFILE'
 # Bitrix24 to BigQuery Data Pipeline
 
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
@@ -8,6 +9,8 @@
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg)
 
 Production-grade ELT pipeline synchronizing Bitrix24 CRM entities (leads, deals, contacts, activities) to Google BigQuery using GCS as a staging layer.
+
+> 📄 **Artigo (PT-BR):** [Bitrix24 para BigQuery: Pipeline Serverless com Cloud Run Jobs, GCS e MERGE](https://www.linkedin.com/pulse/bitrix24-para-bigquery-pipeline-serverless-com-cloud-run-calado-ywkof/) — arquitetura detalhada publicada no LinkedIn.
 
 ## Architecture Overview
 
